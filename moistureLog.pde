@@ -9,6 +9,7 @@ Serial myPort;
 String googleProfile = "clickProfile";
 String currentTime;
 String val;
+String multiReadingValues = "[";
 Integer numReadingsAppended = 0;
 AppendValues appendValuesChoreo; 
 
@@ -35,12 +36,21 @@ void draw(){
 }
 
 void runAppendValuesChoreo() {  
-  appendValuesChoreo.setValues("[[\"" + currentTime + "\", \"" + val + "\"]]");
-
-  if(numReadingsAppended == 20) 
+  multiReadingValues += "[\"" + currentTime + "\", \"" + val + "\"], ";
+  
+  if(numReadingsAppended == 100) 
   {
-      AppendValuesResultSet appendValuesResults = appendValuesChoreo.run(); 
-      println(appendValuesResults);
-      appendValuesChoreo.clearInput();
-  }    
+    println(multiReadingValues);
+    println("sending data!!!!!!!!!!!!!!!!!!!!!!!!!");
+    multiReadingValues += "]";
+    appendValuesChoreo.setValues(multiReadingValues);
+  
+    AppendValuesResultSet appendValuesResults = appendValuesChoreo.run();    
+    appendValuesChoreo = new AppendValues(session);  
+    appendValuesChoreo.setCredential(googleProfile);
+    numReadingsAppended = 0;
+    multiReadingValues = "[";
+  } else {    
+    numReadingsAppended++;
+  }
 }
