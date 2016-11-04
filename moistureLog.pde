@@ -18,7 +18,7 @@ void setup() {
   appendValuesChoreo.setCredential(googleProfile);
   
   numReadingsAppended = 0;
-  String portName = Serial.list()[3];
+  String portName = Serial.list()[1];
   myPort = new Serial(this, portName, 9600);
 }
 
@@ -28,19 +28,34 @@ void draw(){
   {
   val = myPort.readStringUntil('\n');
   } 
-  println(val);
+  //println(val);
   
-  runAppendValuesChoreo();
+  try {
+        if(val != null){
+          Float intVal = Float.valueOf(val);
+        
+          if (intVal > 67 && intVal < 6000){
+             runAppendValuesChoreo(intVal);
+          }
+        }
+      } 
+  catch (NumberFormatException e) {
+        //Log exception?
+  }
 
   //println("data uploaded");
 }
 
-void runAppendValuesChoreo() {  
-  multiReadingValues += "[\"" + currentTime + "\", \"" + val + "\"], ";
-  
-  if(numReadingsAppended == 100) 
+void runAppendValuesChoreo(Float newValue) { 
+  multiReadingValues += "[";
+  //multiReadingValues += currentTime;
+  //multiReadingValues += ",";
+  multiReadingValues += newValue;
+  multiReadingValues += "], ";
+
+  if(numReadingsAppended == 2000) 
   {
-    println(multiReadingValues);
+    //println(multiReadingValues);
     println("sending data!!!!!!!!!!!!!!!!!!!!!!!!!");
     multiReadingValues += "]";
     appendValuesChoreo.setValues(multiReadingValues);
@@ -50,7 +65,9 @@ void runAppendValuesChoreo() {
     appendValuesChoreo.setCredential(googleProfile);
     numReadingsAppended = 0;
     multiReadingValues = "[";
+    exit();
   } else {    
+    println(numReadingsAppended);
     numReadingsAppended++;
   }
 }
