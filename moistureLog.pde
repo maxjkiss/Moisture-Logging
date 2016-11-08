@@ -1,73 +1,70 @@
 import processing.serial.*;
 import com.temboo.core.*;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.Date;
 import com.temboo.Library.Google.Sheets.*;
 
-TembooSession session = new TembooSession("moisture", "myFirstApp", "8RabXg4VFekSislcTDCXIMasy61tIKHN");
+TembooSession session = new TembooSession("moisture", "growMoistureSensor", "8RabXg4VFekSislcTDCXIMasy61tIKHN");
 
-Serial myPort;
+Serial tenHSPort;
+Serial gH1Port;
+Serial eC5Port;
  
-String googleProfile = "clickProfile";
-String currentTime;
-String val;
+String googleProfile = "allSensorIncremental";
+
 String multiReadingValues = "[";
-Integer numReadingsAppended = 0;
+
 AppendValues appendValuesChoreo; 
+static Timer timer;
 
 void setup() {
+  println("setting up");
   appendValuesChoreo = new AppendValues(session);  
   appendValuesChoreo.setCredential(googleProfile);
   
-  numReadingsAppended = 0;
-  String portName = Serial.list()[1];
-  myPort = new Serial(this, portName, 9600);
-}
-
-void draw(){
-  currentTime = hour()+":"+minute()+":"+second()+"."+millis();
-  if ( myPort.available() > 0) 
-  {
-  val = myPort.readStringUntil('\n');
-  } 
-  //println(val);
+//  String entry = "[[TimeStamp, 10HS, gH1Reading, eC5Reading]]";  
   
-  try {
-        if(val != null){
-          Float intVal = Float.valueOf(val);
-        
-          if (intVal > 67 && intVal < 6000){
-             runAppendValuesChoreo(intVal);
-          }
+  //tenHSPort = new Serial(this, Serial.list()[0], 9600);
+  gH1Port = new Serial(this, Serial.list()[1], 9600);
+  //eC5Port = new Serial(this, Serial.list()[2], 9600);
+    
+  timer = new Timer();
+  
+  timer.scheduleAtFixedRate(new TimerTask() {
+    public void run() {
+            takeReading();
         }
-      } 
-  catch (NumberFormatException e) {
-        //Log exception?
-  }
-
-  //println("data uploaded");
+  }, 0, 5000);
 }
 
-void runAppendValuesChoreo(Float newValue) { 
-  multiReadingValues += "[";
-  //multiReadingValues += currentTime;
-  //multiReadingValues += ",";
-  multiReadingValues += newValue;
-  multiReadingValues += "], ";
-
-  if(numReadingsAppended == 2000) 
-  {
-    //println(multiReadingValues);
-    println("sending data!!!!!!!!!!!!!!!!!!!!!!!!!");
-    multiReadingValues += "]";
-    appendValuesChoreo.setValues(multiReadingValues);
+void takeReading() {
+  String currentTime = hour()+":"+minute()+":"+second()+"."+millis();
+  println("timer triggered:" + currentTime);  
   
-    AppendValuesResultSet appendValuesResults = appendValuesChoreo.run();    
-    appendValuesChoreo = new AppendValues(session);  
-    appendValuesChoreo.setCredential(googleProfile);
-    numReadingsAppended = 0;
-    multiReadingValues = "[";
-    exit();
-  } else {    
-    println(numReadingsAppended);
-    numReadingsAppended++;
-  }
+  Float tenHSReading = 1.0; //valueFromPort(tenHSPort);
+  Float gH1Reading = 2.0; //valueFromPort(gH1Port);
+  Float eC5Reading = 3.0; //valueFromPort(eC5Port);
+  
+  Date currentDate = new Date();
+  String entry = "[[" + currentDate.getTime() + "," + tenHSReading + "," + gH1Reading + "," + eC5Reading + "]]";
+  
+  appendEntry(entry);
+}
+
+void appendEntry(String entry) {    
+  println("Appending entry: " + entry);
+  appendValuesChoreo.setValues(entry);  
+  appendValuesChoreo.run();    
+  appendValuesChoreo = new AppendValues(session);  
+  appendValuesChoreo.setCredential(googleProfile);
+}
+
+String valueFromPort(Serial port) {
+  String val = "";
+  if ( port.available() > 0) 
+  {
+    val = port.readStringUntil('\n');
+  } 
+  return val;
 }
