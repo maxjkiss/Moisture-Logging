@@ -18,38 +18,45 @@ String multiReadingValues = "[";
 AppendValues appendValuesChoreo; 
 static Timer timer;
 
+String val;
+
+Boolean nextReadingReady = false;
+
 void setup() {
-  println("setting up");
   appendValuesChoreo = new AppendValues(session);  
   appendValuesChoreo.setCredential(googleProfile);
   
 //  String entry = "[[TimeStamp, 10HS, gH1Reading, eC5Reading]]";  
-  println("Serial list" + Serial.list().length);
-  tenHSPort = new Serial(this, Serial.list()[0], 9600);
-  gH1Port = new Serial(this, Serial.list()[1], 9600);
-  //eC5Port = new Serial(this, Serial.list()[2], 9600);
-    
+  println("Serial 0" + Serial.list()[0]);
+  println("Serial 1" + Serial.list()[1]);
+  println("Serial 2" + Serial.list()[2]);
+  println("Serial 3" + Serial.list()[3]);
+  
+  tenHSPort = new Serial(this, Serial.list()[2], 9600);
+  gH1Port = new Serial(this, Serial.list()[3], 9600);
+  eC5Port = new Serial(this, Serial.list()[1], 9600);
+   
   timer = new Timer();
   
   timer.scheduleAtFixedRate(new TimerTask() {
     public void run() {
-            takeReading();
+            nextReadingReady = true;
         }
-  }, 0, 5000);
+  }, 0, 5000);  
+}
+
+void draw() {
+  if(nextReadingReady) {
+    takeReading();
+    nextReadingReady = false;
+  }
 }
 
 void takeReading() {
-  String currentTime = hour()+":"+minute()+":"+second()+"."+millis();
-  println("timer triggered:" + currentTime);  
-  
-  //tenHSPort = new Serial(this, Serial.list()[2], 9600);
-  //gH1Port = new Serial(this, Serial.list()[1], 9600);
-  
-  Float tenHSReading = valueFromPort(tenHSPort);
   Float gH1Reading = valueFromPort(gH1Port);
-  Float eC5Reading = 3.0; //valueFromPort(eC5Port);
+  Float tenHSReading = valueFromPort(tenHSPort);
+  Float eC5Reading = valueFromPort(eC5Port);
   
- 
   Date currentDate = new Date();
   String entry = "[[" + currentDate.getTime() + "," + tenHSReading + "," + gH1Reading + "," + eC5Reading + "]]";
   
@@ -66,13 +73,15 @@ void appendEntry(String entry) {
 
 Float valueFromPort(Serial port) {
   Float val = 0.0;
-  if ( port.available() > 0) 
+
   {
     String strval = port.readStringUntil('\n');
-    if(strval == null){
-      
-    println("Reading: " + strval);
-    val = Float.valueOf(strval);
+    if(strval != null) {
+      String trimmedVal = strval.trim();
+      if(trimmedVal != ""){      
+        println("Reading:" + trimmedVal + "<---");
+        val = Float.valueOf(trimmedVal);
+      }
     }
   } 
   return val;
