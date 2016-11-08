@@ -8,7 +8,7 @@ import com.temboo.Library.Google.Sheets.*;
 TembooSession session = new TembooSession("moisture", "growMoistureSensor", "8RabXg4VFekSislcTDCXIMasy61tIKHN");
 
 Serial tenHSPort;
-Serial gH1Port;
+Serial gS1Port;
 Serial eC5Port;
  
 String googleProfile = "allSensorIncremental";
@@ -32,9 +32,9 @@ void setup() {
   println("Serial 2" + Serial.list()[2]);
   println("Serial 3" + Serial.list()[3]);
   
-  tenHSPort = new Serial(this, Serial.list()[2], 9600);
-  gH1Port = new Serial(this, Serial.list()[3], 9600);
-  eC5Port = new Serial(this, Serial.list()[1], 9600);
+  tenHSPort = new Serial(this, Serial.list()[1], 9600);
+  gS1Port = new Serial(this, Serial.list()[2], 9600);
+  eC5Port = new Serial(this, Serial.list()[3], 9600);
    
   timer = new Timer();
   
@@ -53,12 +53,12 @@ void draw() {
 }
 
 void takeReading() {
-  Float gH1Reading = valueFromPort(gH1Port);
+  Float gS1Reading = valueFromPort(gS1Port);
   Float tenHSReading = valueFromPort(tenHSPort);
   Float eC5Reading = valueFromPort(eC5Port);
   
   Date currentDate = new Date();
-  String entry = "[[" + currentDate.getTime() + "," + tenHSReading + "," + gH1Reading + "," + eC5Reading + "]]";
+  String entry = "[[" + currentDate.getTime()+ "," + gS1Reading + "," + tenHSReading + "," + eC5Reading + "]]";
   
   appendEntry(entry);
 }
@@ -74,11 +74,11 @@ void appendEntry(String entry) {
 Float valueFromPort(Serial port) {
   Float val = 0.0;
 
-  {
+  {    
     String strval = port.readStringUntil('\n');
     if(strval != null) {
       String trimmedVal = strval.trim();
-      if(trimmedVal != ""){      
+      if(trimmedVal != null && !trimmedVal.isEmpty()){      
         println("Reading:" + trimmedVal + "<---");
         val = Float.valueOf(trimmedVal);
       }
