@@ -24,8 +24,8 @@ void setup() {
   appendValuesChoreo.setCredential(googleProfile);
   
 //  String entry = "[[TimeStamp, 10HS, gH1Reading, eC5Reading]]";  
-  
-  //tenHSPort = new Serial(this, Serial.list()[0], 9600);
+  println("Serial list" + Serial.list().length);
+  tenHSPort = new Serial(this, Serial.list()[0], 9600);
   gH1Port = new Serial(this, Serial.list()[1], 9600);
   //eC5Port = new Serial(this, Serial.list()[2], 9600);
     
@@ -42,10 +42,14 @@ void takeReading() {
   String currentTime = hour()+":"+minute()+":"+second()+"."+millis();
   println("timer triggered:" + currentTime);  
   
-  Float tenHSReading = 1.0; //valueFromPort(tenHSPort);
-  Float gH1Reading = 2.0; //valueFromPort(gH1Port);
+  //tenHSPort = new Serial(this, Serial.list()[2], 9600);
+  //gH1Port = new Serial(this, Serial.list()[1], 9600);
+  
+  Float tenHSReading = valueFromPort(tenHSPort);
+  Float gH1Reading = valueFromPort(gH1Port);
   Float eC5Reading = 3.0; //valueFromPort(eC5Port);
   
+ 
   Date currentDate = new Date();
   String entry = "[[" + currentDate.getTime() + "," + tenHSReading + "," + gH1Reading + "," + eC5Reading + "]]";
   
@@ -60,11 +64,16 @@ void appendEntry(String entry) {
   appendValuesChoreo.setCredential(googleProfile);
 }
 
-String valueFromPort(Serial port) {
-  String val = "";
+Float valueFromPort(Serial port) {
+  Float val = 0.0;
   if ( port.available() > 0) 
   {
-    val = port.readStringUntil('\n');
+    String strval = port.readStringUntil('\n');
+    if(strval == null){
+      
+    println("Reading: " + strval);
+    val = Float.valueOf(strval);
+    }
   } 
   return val;
 }
